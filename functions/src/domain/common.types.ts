@@ -1,0 +1,1 @@
+export type UUID = string // 後ほどキッチリ型を作る

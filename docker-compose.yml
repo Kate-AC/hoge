@@ -1,0 +1,52 @@
+version: '3'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./docker/app/Dockerfile
+    command: npm run dev
+    tty: true
+    volumes:
+      - ./app:/project:cached
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    ports:
+      - 53001:3000
+    networks:
+      default:
+    env_file: ./app/.env.local
+  functions:
+    build:
+      context: .
+      dockerfile: ./docker/functions/Dockerfile
+    command: npm run start:dev
+    tty: true
+    volumes:
+      - ./functions:/project:cached
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    networks:
+      default:
+    env_file: ./functions/.env.local
+  firebase:
+    build:
+      context: .
+      dockerfile: ./docker/firebase/Dockerfile
+    volumes:
+      - ./functions:/opt/firebase/functions:cached
+      - ./docker/firebase/config/firebase.json:/opt/firebase/firebase.json
+      - ./docker/firebase/config/configstore:/.config/configstore
+      - ./docker/firebase/data/bin/:/root/.cache:cached
+      - ./docker/firebase/data/config/:/root/.config:cached
+      - ./docker/firebase/data/firebase/:/var/local/firebase:cached
+    ports:
+      - 24000:4000 #Emulator Suite UI
+      - 8080:8080 #Cloud Firestore
+      - 5001:5001
+      - 9199:9199
+      - 9150:9150
+      - 8085:8085
+      - 4500:4500
+    command: /bin/bash -c "cd functions && npm run build && firebase emulators:start --debug --project demo-local --import=/var/local/firebase/export_data/firestore_export --export-on-exit"
+    tty: true
+    env_file: ./functions/.env.local
